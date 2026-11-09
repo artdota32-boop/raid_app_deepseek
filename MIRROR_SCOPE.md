@@ -6,7 +6,7 @@ This repository is an explicit allowlist snapshot from the private Raid Scanner 
 - lib/: all current Flutter/Dart application source
 - test/ and root test_*.py / test_*.dart files
 - tool/: diagnostic and development utilities
-- experiments/card_localization/: Python source scripts and two reviewed OCR input crops / frame fixtures
+- experiments/card_localization/: Python source scripts and three reviewed OCR input crops / frame fixtures
 - Root-level Python/Dart trainer and maintenance scripts
 - android/: text build configuration, manifest, and app entry-point sources
 - screenshots/: only the two reviewed Speed reference images listed below
