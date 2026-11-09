@@ -1,0 +1,19 @@
+Uint8List? _cropIcon(Uint8List bytes) {
+  final decoded = img.decodeImage(bytes);
+  if (decoded == null) return null;
+
+  final xStart = 113;
+  final yStart = 490;
+  final xEnd = 214;
+  final yEnd = 540;
+
+  final cropped = img.copyCrop(
+    decoded,
+    x: xStart,
+    y: yStart,
+    width: xEnd - xStart,
+    height: yEnd - yStart,
+  );
+
+  return Uint8List.fromList(img.encodeJpg(cropped, quality: 95));
+}

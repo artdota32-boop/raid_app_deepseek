@@ -1,0 +1,28 @@
+workflows:
+  android-workflow:
+    name: Android Build
+    instance_type: mac_mini_m2
+    max_build_duration: 30
+    environment:
+      flutter: stable
+    scripts:
+      - name: Set version from build number
+        script: |
+          NEW_VERSION="3.5.39+$BUILD_NUMBER"
+          sed -i '' "s/^version: .*/version: $NEW_VERSION/" pubspec.yaml
+          echo "Version set to: $NEW_VERSION"
+      - name: Create Android project
+        script: |
+          flutter create --org com.raidapp --project-name raid_app --platforms=android .
+      - name: Fix minSdk and compileSdk (perl)
+        script: |
+          perl -pi -e 's/minSdk = flutter.minSdkVersion/minSdk = 26/g' android/app/build.gradle.kts
+          perl -pi -e 's/compileSdk = flutter.compileSdkVersion/compileSdk = 36/g' android/app/build.gradle.kts
+      - name: Ignore JVM target mismatch
+        script: |
+          echo "kotlin.jvm.target.validation.mode = IGNORE" >> android/gradle.properties
+      - name: Build APK
+        script: |
+          flutter build apk --debug
+    artifacts:
+      - build/app/outputs/flutter-apk/app-debug.apk

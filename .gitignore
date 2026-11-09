@@ -1,0 +1,53 @@
+.dart_tool/
+.packages
+build/
+*.iml
+.idea/
+.gradle/
+local.properties
+launchapp/
+
+# Local-only files not to publish
+.env
+.env.*
+!.env.example
+*.jks
+*.keystore
+key.properties
+*.pem
+*.p12
+*.pfx
+id_rsa
+id_ed25519
+service-account*.json
+*.apk
+*.aab
+*.mp4
+*.mov
+*.mkv
+*.avi
+*.webm
+
+# Generated Python files
+__pycache__/
+*.py[cod]
+
+# Flutter generated files
+.flutter-plugins-dependencies
+
+# Old local backups
+*.bak
+*.bak*
+*.backup*
+*.before_*
+
+# Android local configuration
+local.properties
+
+# POLYGON test artifacts
+experiments/polygon_test_frames/*.png
+experiments/polygon_test_frames/debug/*.png
+experiments/polygon_time_probe/*.png
+experiments/polygon_time_probe/debug/*.png
+screenshots/outputs/polygon_*.png
+screenshots/outputs/*.npy

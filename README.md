@@ -1,22 +1,27 @@
-# RAID Scanner — DeepSeek review mirror
+# Raid Scanner — expanded DeepSeek review mirror
 
-This is a curated public source mirror of the private raid_app project, provided for external code review.
+This is an expanded, curated public source snapshot of the private Raid Scanner project.
 
 ## Included
-- Selected Flutter/Dart application sources
-- Selected tests and OCR/polygon diagnostic utilities
-- Text dictionaries and game-set metadata
+- All current Flutter/Dart files under lib/
+- Dart and Python tests, tools, OCR trainers, and root-level maintenance scripts
+- Python source experiments under experiments/card_localization/
+- Android text configuration and app entry-point sources
+- Flutter dependency manifests and selected text assets
+- Codemagic and GitLab build configuration
 
-## Intentionally excluded
-- Private Git history
-- API keys, credentials, and local configuration
-- Local Paddle OCR plugin/vendor source pending license review
-- ONNX/TFLite model binaries
-- Datasets, screenshots, generated diagnostics, and logs
-- Backups and personal project notes
+## How to interpret the code
+- The active Flutter application is under lib/.
+- Root-level trainer_*.dart and trainer_*.py files are standalone trainers or experiments; they are not all runtime entry points.
+- The experiments/ directory contains research and comparison scripts. Some require image fixtures or model files that are deliberately not mirrored.
+- The private repository remains the source of truth.
 
-## Important
-- This is a code-review snapshot, not a complete standalone build distribution.
-- The private raid_app repository remains the source of truth.
-- Do not add secrets, personal data, screenshots, logs, or generated artifacts here.
-- Source branch: the private branch used by the latest mirror workflow run.
+## Build limitations
+- Large model binaries, including assets/inference.onnx, are intentionally excluded. A complete local build needs the model supplied separately.
+- The local_plugins/ vendor source is excluded pending a license review.
+- This is intended for source review and architecture analysis, not as a self-contained APK build package.
+
+## Security and privacy
+- No private Git history, API credentials, local secrets, personal notes, datasets, screenshots, generated diagnostics, or logs are included.
+- The publishing workflow checks staged text files for common credential formats before publishing.
+- Do not treat this public mirror as a secure place to store credentials or private data.
