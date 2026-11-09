@@ -1,0 +1,31 @@
+name: raid_app
+description: Raid artifact scanner
+publish_to: none
+version: 3.6.0
+
+environment:
+  sdk: '>=3.4.0 <4.0.0'
+
+dependencies:
+  flutter_onnxruntime: ^1.4.1
+  flutter:
+    sdk: flutter
+  http: ^1.2.0
+  image: ^4.1.0
+  image_picker: ^1.0.4
+  package_info_plus: ^8.0.0
+  paddle_ocr_native: ^0.1.0
+  path_provider: ^2.1.1
+  shared_preferences: ^2.2.2
+  snapframes: ^0.0.1
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/inference.onnx
+    - assets/dict.txt
+    - assets/sets.json
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
