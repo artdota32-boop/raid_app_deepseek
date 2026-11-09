@@ -1,0 +1,157 @@
+import java.security.MessageDigest
+
+group = "com.huyphan.flutter_paddle_ocr"
+version = "1.0-SNAPSHOT"
+
+buildscript {
+    ext.kotlin_version = "2.2.20"
+    repositories {
+        google()
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath("com.android.tools.build:gradle:8.11.1")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version")
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+apply plugin: "com.android.library"
+apply plugin: "kotlin-android"
+
+// ONNX Runtime version is parameterized so downstream apps can pin/roll back.
+// Override from example/android/gradle.properties or `-PonnxRuntimeVersion=...`.
+def onnxRuntimeVersion = (project.findProperty('onnxRuntimeVersion') ?: '1.27.0').toString()
+def openCvUrl = (project.findProperty('openCvUrl') ?: 'https://paddlelite-demo.bj.bcebos.com/libs/android/opencv-4.2.0-android-sdk.tar.gz').toString()
+
+android {
+    namespace = "com.huyphan.flutter_paddle_ocr"
+
+    compileSdk = 36
+    ndkVersion = "27.3.13750724"
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = JavaVersion.VERSION_17
+    }
+
+    sourceSets {
+        main.java.srcDirs += "src/main/kotlin"
+        test.java.srcDirs += "src/test/kotlin"
+    }
+
+    defaultConfig {
+        minSdk = 24
+        externalNativeBuild {
+            cmake {
+                cppFlags "-std=c++17 -frtti -fexceptions -Wno-format"
+                arguments '-DANDROID_PLATFORM=android-24', '-DANDROID_STL=c++_shared', '-DANDROID_ARM_NEON=TRUE'
+            }
+        }
+        ndk {
+            abiFilters 'arm64-v8a'
+        }
+    }
+
+    externalNativeBuild {
+        cmake {
+            path "src/main/cpp/CMakeLists.txt"
+            version "3.22.1"
+        }
+    }
+
+    dependencies {
+        implementation("com.microsoft.onnxruntime:onnxruntime-android:${onnxRuntimeVersion}")
+        testImplementation("org.jetbrains.kotlin:kotlin-test")
+        testImplementation("org.mockito:mockito-core:5.0.0")
+    }
+
+    testOptions {
+        unitTests.all {
+            useJUnitPlatform()
+
+            testLogging {
+               events "passed", "skipped", "failed", "standardOut", "standardError"
+               outputs.upToDateWhen {false}
+               showStandardStreams = true
+            }
+        }
+    }
+}
+
+// ---- Native archive download ----
+// Fetch OpenCV and unpack the ONNX Runtime AAR once so CMake can link against
+// the C++ headers and libonnxruntime.so shipped in the Maven artifact.
+def archives = [
+        [
+                'src' : openCvUrl,
+                'dest': 'OpenCV'
+        ]
+]
+
+task downloadAndExtractArchives(type: DefaultTask) {
+    doFirst {
+        println "Downloading OpenCV native archive and preparing ONNX Runtime ${onnxRuntimeVersion}"
+    }
+    doLast {
+        String cachePath = "${project.projectDir}/cache"
+        if (!file(cachePath).exists()) {
+            mkdir cachePath
+        }
+        archives.each { archive ->
+            MessageDigest messageDigest = MessageDigest.getInstance('MD5')
+            messageDigest.update(archive.src.bytes)
+            String cacheName = new BigInteger(1, messageDigest.digest()).toString(32)
+            File archiveFile = file("${cachePath}/${cacheName}.tar.gz")
+            File destDir = file("${project.projectDir}/${archive.dest}")
+            boolean needsExtract = !destDir.exists()
+            if (!archiveFile.exists()) {
+                println "Downloading ${archive.src}"
+                ant.get(src: archive.src, dest: archiveFile)
+                needsExtract = true
+            }
+            if (needsExtract) {
+                copy {
+                    from tarTree(archiveFile)
+                    into destDir
+                }
+            }
+        }
+    }
+}
+
+configurations {
+    onnxruntimeAar
+}
+
+dependencies {
+    onnxruntimeAar("com.microsoft.onnxruntime:onnxruntime-android:${onnxRuntimeVersion}@aar")
+}
+
+task extractOnnxRuntimeAar(type: Copy) {
+    from {
+        configurations.onnxruntimeAar.collect { zipTree(it) }
+    }
+    into "${project.projectDir}/OnnxRuntime"
+}
+
+preBuild.dependsOn downloadAndExtractArchives, extractOnnxRuntimeAar
+
+tasks.configureEach { task ->
+    if (task.name.startsWith("configureCMake") ||
+            task.name.startsWith("buildCMake") ||
+            task.name.startsWith("externalNativeBuild")) {
+        task.dependsOn downloadAndExtractArchives, extractOnnxRuntimeAar
+    }
+}

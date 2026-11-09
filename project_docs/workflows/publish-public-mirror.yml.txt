@@ -1,0 +1,1053 @@
+name: Publish curated DeepSeek mirror
+
+on:
+  push:
+    branches:
+      - paddle-onnx-crop-compare-20261108
+  workflow_dispatch:
+    inputs:
+      source_branch:
+        description: Private source branch to mirror
+        required: true
+        default: paddle-onnx-crop-compare-20261108
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deepseek-mirror-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      SOURCE_REF: ${{ github.event_name == 'workflow_dispatch' && inputs.source_branch || github.ref_name }}
+    steps:
+      - name: Check mirror token
+        env:
+          MIRROR_TOKEN: ${{ secrets.DEEPSEEK_MIRROR_TOKEN }}
+        run: |
+          if [ -z "$MIRROR_TOKEN" ]; then
+            echo "::error::Add the DEEPSEEK_MIRROR_TOKEN Actions secret to the private raid_app repository."
+            exit 1
+          fi
+
+      - name: Check source branch
+        run: |
+          case "$SOURCE_REF" in
+            main|paddle-onnx-crop-compare-20261108) ;;
+            *) echo "::error::Unsupported source branch"; exit 1 ;;
+          esac
+
+      - name: Checkout private source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_REF }}
+          path: private-source
+          persist-credentials: false
+
+      - name: Build allowlisted public snapshot
+        run: |
+          set -euo pipefail
+          SRC="$GITHUB_WORKSPACE/private-source"
+          STAGE="$RUNNER_TEMP/raid-app-deepseek-stage"
+          mkdir -p "$STAGE"
+
+          files=(
+            ".gitignore"
+            ".gitlab-ci.yml"
+            "DEVELOPMENT_CONTEXT.md"
+            "DEVELOPMENT_HISTORY.md"
+            "MODEL_CATALOG.md"
+            "REFERENCE_FIXTURES.md"
+            "add_button.py"
+            "add_disk_clean.py"
+            "add_done_main.py"
+            "add_onnx.py"
+            "android/app/build.gradle"
+            "android/app/src/main/AndroidManifest.xml"
+            "android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java"
+            "android/app/src/main/kotlin/com/example/raid_app/MainActivity.kt"
+            "android/app/src/main/res/drawable/launch_background.xml"
+            "android/app/src/main/res/values/styles.xml"
+            "android/build.gradle"
+            "android/gradle.properties"
+            "android/gradle/wrapper/gradle-wrapper.properties"
+            "android/gradlew"
+            "android/gradlew.bat"
+            "android/settings.gradle"
+            "assets/diagnostics/line_08_white.png"
+            "assets/dict.txt"
+            "assets/sets.json"
+            "auto_label.py"
+            "codemagic.yaml"
+            "create_android.py"
+            "experiments/card_localization/auto_card_detector.py"
+            "experiments/card_localization/card_crop.jpg"
+            "experiments/card_localization/checkpoints/python_ocr_v1/auto_card_detector.py"
+            "experiments/card_localization/checkpoints/python_ocr_v1/filter_card_candidates.py"
+            "experiments/card_localization/checkpoints/python_ocr_v1/test_full_ocr.py"
+            "experiments/card_localization/dbnet_samples_v1/card_001_t0p6s.jpg"
+            "experiments/card_localization/diag_boxes.py"
+            "experiments/card_localization/diag_tensor.py"
+            "experiments/card_localization/extract_cards.py"
+            "experiments/card_localization/filter_card_candidates.py"
+            "experiments/card_localization/scan_all_videos.py"
+            "experiments/card_localization/scan_video_cards.py"
+            "experiments/card_localization/speed_ru_frame_2s.jpg"
+            "experiments/card_localization/test_coverage_metrics.py"
+            "experiments/card_localization/test_craft960_vs_dbnet_ru2.py"
+            "experiments/card_localization/test_craft_ocr_vs_dbnet_ocr.py"
+            "experiments/card_localization/test_craft_vs_dbnet_7frames.py"
+            "experiments/card_localization/test_dbnet_on_samples.py"
+            "experiments/card_localization/test_det_vs_morph.py"
+            "experiments/card_localization/test_full_ocr.py"
+            "experiments/card_localization/test_ocr_ab.py"
+            "experiments/card_localization/test_ocr_compare.py"
+            "experiments/card_localization/test_overlay_compare.py"
+            "experiments/card_localization/test_ppocrv6_vs_dbnet.py"
+            "find_text_lines.py"
+            "fix_brackets.py"
+            "fix_manifest.py"
+            "fix_onnx.py"
+            "fix_release.py"
+            "inject_onnx.py"
+            "inspect_colors.py"
+            "inspect_gaps.py"
+            "install.sh"
+            "lib/about_screen.dart"
+            "lib/crop_calibrator.dart"
+            "lib/game_validator.dart"
+            "lib/icon_crop.txt"
+            "lib/main.dart"
+            "lib/onnx_ocr.dart"
+            "lib/parser.dart"
+            "lib/polygon/polygon_detector.dart"
+            "lib/polygon/polygon_models.dart"
+            "lib/polygon/polygon_ocr_diagnostic_screen.dart"
+            "lib/repl_screen.dart"
+            "lib/roboflow_api.dart"
+            "lib/star_detector.dart"
+            "patch.py"
+            "pubspec.lock"
+            "pubspec.yaml"
+            "safe_button.py"
+            "screenshots/outputs/speed_ru_card_crop.png"
+            "screenshots/speed_ru_frame.png"
+            "split_areas.py"
+            "split_by_color.py"
+            "super_clean.py"
+            "surgical_fix.py"
+            "test/game_validator_test.dart"
+            "test/polygon_detector_test.dart"
+            "test_adaptive_segmentation.py"
+            "test_auto_crop_ocr.py"
+            "test_card_detection.py"
+            "test_connected_components.py"
+            "test_final_ocr.py"
+            "test_parser.dart"
+            "test_parser_simple.dart"
+            "test_perception.dart"
+            "test_zoned_lines.py"
+            "tool/polygon_ascii_diagnostic.dart"
+            "tool/polygon_batch_diagnostic.dart"
+            "tool/polygon_bottom_edge_probe.dart"
+            "tool/polygon_padding_test.py"
+            "tool/polygon_probe.dart"
+            "tool/polygon_probe_diagnostics.dart"
+            "tool/polygon_probe_raw.dart"
+            "tool/polygon_text_report.py"
+            "trainer.dart"
+            "trainer_debug.dart"
+            "trainer_exact.dart"
+            "trainer_final.dart"
+            "trainer_final2.dart"
+            "trainer_final_fixes.dart"
+            "trainer_fixed.dart"
+            "trainer_full.dart"
+            "trainer_ideal.dart"
+            "trainer_ocr.py"
+            "trainer_ocr_v1_success.py"
+            "trainer_order_fix.dart"
+            "trainer_order_fix2.dart"
+            "ultimate_fix.py"
+            "update_appbar.py"
+            "update_pubspec.py"
+            "update_test_onnx.py"
+            "android/app/src/main/res/mipmap-hdpi/ic_launcher.png"
+            "android/gradle/wrapper/gradle-wrapper.jar"
+            "card_filter.log"
+            "dataset_final/5star/icon_1792232438309.jpg"
+            "dataset_final/5star/icon_1792232479625.jpg"
+            "dataset_final/5star/icon_1792232538650.jpg"
+            "dataset_final/5star/icon_1792232565519.jpg"
+            "dataset_final/6star/icon_1792232114927.jpg"
+            "dataset_final/6star/icon_1792232423294.jpg"
+            "dataset_final/6star/icon_1792232461311.jpg"
+            "dataset_final/6star/icon_1792232490798.jpg"
+            "dataset_final/6star/icon_1792232524867.jpg"
+            "dataset_final/6star/icon_1792232592864.jpg"
+            "dataset_icons/icon_1792232114927.jpg"
+            "dataset_icons/icon_1792232423294.jpg"
+            "dataset_icons/icon_1792232438309.jpg"
+            "dataset_icons/icon_1792232461311.jpg"
+            "dataset_icons/icon_1792232479625.jpg"
+            "dataset_icons/icon_1792232490798.jpg"
+            "dataset_icons/icon_1792232524867.jpg"
+            "dataset_icons/icon_1792232538650.jpg"
+            "dataset_icons/icon_1792232565519.jpg"
+            "dataset_icons/icon_1792232592864.jpg"
+            "dataset_roboflow/README.roboflow.txt"
+            "dataset_roboflow/test/5star/icon_1792232565519_jpg.rf.f6432a148cf4abc9a00d3c30fd5bf542.jpg"
+            "dataset_roboflow/test/6star/icon_1792232490798_jpg.rf.909c41bbeeb5d262cf0fb880023b5577.jpg"
+            "dataset_roboflow/train/5star/icon_1792232438309_jpg.rf.4c255b2a5938375702ec89ceeb37495c.jpg"
+            "dataset_roboflow/train/5star/icon_1792232479625_jpg.rf.46744b90f0863e32f3b71a1eb8e29764.jpg"
+            "dataset_roboflow/train/5star/icon_1792232538650_jpg.rf.b2a870cf3d8b12633b18fe2103d42b3a.jpg"
+            "dataset_roboflow/train/6star/icon_1792232114927_jpg.rf.b299d8e7d7e943c33d19c5e404434082.jpg"
+            "dataset_roboflow/train/6star/icon_1792232461311_jpg.rf.667b78a661697304ded3e187a3cd551d.jpg"
+            "dataset_roboflow/train/6star/icon_1792232592864_jpg.rf.95c0e4d55324a0bd4ffdebd62ece5d72.jpg"
+            "dataset_roboflow/valid/6star/icon_1792232423294_jpg.rf.14fe632ccf167144a513dd7f8946fe1a.jpg"
+            "dataset_roboflow/valid/6star/icon_1792232524867_jpg.rf.7c6bfed97f204b5fd998c0c3329fe437.jpg"
+            "experiments/card_localization/card_candidates.jpg"
+            "experiments/card_localization/checkpoints/python_ocr_v1/RESULTS.txt"
+            "experiments/card_localization/checkpoints/python_ocr_v1/card_crop.jpg"
+            "experiments/card_localization/checkpoints/python_ocr_v1/filtered_candidates.jpg"
+            "experiments/card_localization/checkpoints/python_ocr_v1/speed_ru_frame_2s.jpg"
+            "experiments/card_localization/checkpoints/python_ocr_v1/test_full_ocr.jpg"
+            "experiments/card_localization/craft/craft_mlt_25k.onnx"
+            "experiments/card_localization/dbnet_result.jpg"
+            "experiments/card_localization/dbnet_samples_v1/card_002_t1p6s.jpg"
+            "experiments/card_localization/dbnet_samples_v1/card_003_t2p6s.jpg"
+            "experiments/card_localization/dbnet_samples_v1/card_004_t3p6s.jpg"
+            "experiments/card_localization/dbnet_samples_v1/card_005_t4p6s.jpg"
+            "experiments/card_localization/dbnet_samples_v1/card_006_t5p6s.jpg"
+            "experiments/card_localization/dbnet_samples_v1/card_007_t6p6s.jpg"
+            "experiments/card_localization/dbnet_samples_v1/samples.csv"
+            "experiments/card_localization/dbnet_samples_v1_results/ppocrv6_vs_dbnet_t0p6s.jpg"
+            "experiments/card_localization/dbnet_samples_v1_results/result_card_001_t0p6s.jpg"
+            "experiments/card_localization/dbnet_samples_v1_results/result_card_002_t1p6s.jpg"
+            "experiments/card_localization/dbnet_samples_v1_results/result_card_003_t2p6s.jpg"
+            "experiments/card_localization/dbnet_samples_v1_results/result_card_004_t3p6s.jpg"
+            "experiments/card_localization/dbnet_samples_v1_results/result_card_005_t4p6s.jpg"
+            "experiments/card_localization/dbnet_samples_v1_results/result_card_006_t5p6s.jpg"
+            "experiments/card_localization/dbnet_samples_v1_results/result_card_007_t6p6s.jpg"
+            "experiments/card_localization/dbnet_samples_v1_results/summary.csv"
+            "experiments/card_localization/det_inference.onnx"
+            "experiments/card_localization/det_vs_morph.jpg"
+            "experiments/card_localization/diagnose_mask.jpg"
+            "experiments/card_localization/filtered_candidates.jpg"
+            "experiments/card_localization/missed_frames_contact_sheet.jpg"
+            "experiments/card_localization/morphology_result.jpg"
+            "experiments/card_localization/ocr_compare.jpg"
+            "experiments/card_localization/ocr_dbnet.jpg"
+            "experiments/card_localization/ocr_morphology.jpg"
+            "experiments/card_localization/overlays/overlay_ru_001_t0p6s.png"
+            "experiments/card_localization/overlays/overlay_ru_002_t1p6s.png"
+            "experiments/card_localization/overlays/overlay_ru_007_t6p6s.png"
+            "experiments/card_localization/ppocrv6_small_det.onnx"
+            "experiments/card_localization/ru_second_samples/ru_001_t0p6s.jpg"
+            "experiments/card_localization/ru_second_samples/ru_002_t1p6s.jpg"
+            "experiments/card_localization/ru_second_samples/ru_003_t2p6s.jpg"
+            "experiments/card_localization/ru_second_samples/ru_004_t3p6s.jpg"
+            "experiments/card_localization/ru_second_samples/ru_005_t4p6s.jpg"
+            "experiments/card_localization/ru_second_samples/ru_006_t5p6s.jpg"
+            "experiments/card_localization/ru_second_samples/ru_007_t6p6s.jpg"
+            "experiments/card_localization/scan_video.log"
+            "experiments/card_localization/test_full_ocr.jpg"
+            "experiments/polygon_test_frames/debug/polygon_batch_results.json"
+            "experiments/polygon_test_frames/polygon_ascii_diagnostic.txt"
+            "experiments/polygon_time_probe/debug/polygon_batch_results.json"
+            "local_plugins/flutter_paddle_ocr_v5/android/build.gradle"
+            "local_plugins/flutter_paddle_ocr_v5/android/settings.gradle"
+            "local_plugins/flutter_paddle_ocr_v5/android/src/main/AndroidManifest.xml"
+            "local_plugins/flutter_paddle_ocr_v5/android/src/main/cpp/CMakeLists.txt"
+            "local_plugins/flutter_paddle_ocr_v5/android/src/main/cpp/common.h"
+            "local_plugins/flutter_paddle_ocr_v5/android/src/main/cpp/native.cpp"
+            "local_plugins/flutter_paddle_ocr_v5/android/src/main/cpp/native.h"
+            "local_plugins/flutter_paddle_ocr_v5/android/src/main/cpp/ocr_clipper.cpp"
+            "local_plugins/flutter_paddle_ocr_v5/android/src/main/cpp/ocr_clipper.hpp"
+            "local_plugins/flutter_paddle_ocr_v5/android/src/main/cpp/ocr_cls_process.cpp"
+            "local_plugins/flutter_paddle_ocr_v5/android/src/main/cpp/ocr_cls_process.h"
+            "local_plugins/flutter_paddle_ocr_v5/android/src/main/cpp/ocr_crnn_process.cpp"
+            "local_plugins/flutter_paddle_ocr_v5/android/src/main/cpp/ocr_crnn_process.h"
+            "local_plugins/flutter_paddle_ocr_v5/android/src/main/cpp/ocr_db_post_process.cpp"
+            "local_plugins/flutter_paddle_ocr_v5/android/src/main/cpp/ocr_db_post_process.h"
+            "local_plugins/flutter_paddle_ocr_v5/android/src/main/cpp/ocr_ppredictor.cpp"
+            "local_plugins/flutter_paddle_ocr_v5/android/src/main/cpp/ocr_ppredictor.h"
+            "local_plugins/flutter_paddle_ocr_v5/android/src/main/cpp/ppredictor.cpp"
+            "local_plugins/flutter_paddle_ocr_v5/android/src/main/cpp/ppredictor.h"
+            "local_plugins/flutter_paddle_ocr_v5/android/src/main/cpp/predictor_input.cpp"
+            "local_plugins/flutter_paddle_ocr_v5/android/src/main/cpp/predictor_input.h"
+            "local_plugins/flutter_paddle_ocr_v5/android/src/main/cpp/predictor_output.cpp"
+            "local_plugins/flutter_paddle_ocr_v5/android/src/main/cpp/predictor_output.h"
+            "local_plugins/flutter_paddle_ocr_v5/android/src/main/cpp/preprocess.cpp"
+            "local_plugins/flutter_paddle_ocr_v5/android/src/main/cpp/preprocess.h"
+            "local_plugins/flutter_paddle_ocr_v5/android/src/main/java/com/baidu/paddle/lite/demo/ocr/OCRPredictorNative.java"
+            "local_plugins/flutter_paddle_ocr_v5/android/src/main/java/com/baidu/paddle/lite/demo/ocr/OcrResultModel.java"
+            "local_plugins/flutter_paddle_ocr_v5/android/src/main/kotlin/com/huyphan/flutter_paddle_ocr/FlutterPaddleOcrPlugin.kt"
+            "local_plugins/flutter_paddle_ocr_v5/android/src/main/kotlin/com/huyphan/flutter_paddle_ocr/PaddleOcrEngine.kt"
+            "local_plugins/flutter_paddle_ocr_v5/ios/Classes/FlutterPaddleOcrPlugin.swift"
+            "local_plugins/flutter_paddle_ocr_v5/ios/Classes/PaddleOcrEngine.h"
+            "local_plugins/flutter_paddle_ocr_v5/ios/Classes/PaddleOcrEngine.mm"
+            "local_plugins/flutter_paddle_ocr_v5/ios/Classes/ppocr/clipper.cpp"
+            "local_plugins/flutter_paddle_ocr_v5/ios/Classes/ppocr/clipper.h"
+            "local_plugins/flutter_paddle_ocr_v5/ios/Classes/ppocr/clipper.hpp"
+            "local_plugins/flutter_paddle_ocr_v5/ios/Classes/ppocr/cls_process.cpp"
+            "local_plugins/flutter_paddle_ocr_v5/ios/Classes/ppocr/cls_process.h"
+            "local_plugins/flutter_paddle_ocr_v5/ios/Classes/ppocr/db_post_process.cpp"
+            "local_plugins/flutter_paddle_ocr_v5/ios/Classes/ppocr/db_post_process.h"
+            "local_plugins/flutter_paddle_ocr_v5/ios/Classes/ppocr/det_process.cpp"
+            "local_plugins/flutter_paddle_ocr_v5/ios/Classes/ppocr/det_process.h"
+            "local_plugins/flutter_paddle_ocr_v5/ios/Classes/ppocr/ort_predictor.cpp"
+            "local_plugins/flutter_paddle_ocr_v5/ios/Classes/ppocr/ort_predictor.h"
+            "local_plugins/flutter_paddle_ocr_v5/ios/Classes/ppocr/rec_process.cpp"
+            "local_plugins/flutter_paddle_ocr_v5/ios/Classes/ppocr/rec_process.h"
+            "local_plugins/flutter_paddle_ocr_v5/ios/Classes/ppocr/timer.h"
+            "local_plugins/flutter_paddle_ocr_v5/ios/Classes/ppocr/utils.cpp"
+            "local_plugins/flutter_paddle_ocr_v5/ios/Classes/ppocr/utils.h"
+            "local_plugins/flutter_paddle_ocr_v5/ios/Resources/PrivacyInfo.xcprivacy"
+            "local_plugins/flutter_paddle_ocr_v5/ios/flutter_paddle_ocr_v5.podspec"
+            "local_plugins/flutter_paddle_ocr_v5/lib/flutter_paddle_ocr.dart"
+            "local_plugins/flutter_paddle_ocr_v5/lib/flutter_paddle_ocr_method_channel.dart"
+            "local_plugins/flutter_paddle_ocr_v5/lib/flutter_paddle_ocr_platform_interface.dart"
+            "local_plugins/flutter_paddle_ocr_v5/lib/flutter_paddle_ocr_v5.dart"
+            "local_plugins/flutter_paddle_ocr_v5/lib/flutter_paddle_ocr_web.dart"
+            "local_plugins/flutter_paddle_ocr_v5/lib/src/model_source.dart"
+            "local_plugins/flutter_paddle_ocr_v5/lib/src/models.dart"
+            "local_plugins/flutter_paddle_ocr_v5/pubspec.yaml"
+          )
+
+          for file in "${files[@]}"; do
+            if [ ! -f "$SRC/$file" ]; then
+              echo "::error::Expected source file is missing: $file"
+              exit 1
+            fi
+            mkdir -p "$STAGE/$(dirname "$file")"
+            cp "$SRC/$file" "$STAGE/$file"
+          done
+
+          mkdir -p "$STAGE/licenses" "$STAGE/local_plugins" "$STAGE/project_docs/workflows"
+
+          cat > "$STAGE/README.md" <<'README_EOF'
+          # Raid Scanner — expanded public source mirror
+          
+          This is a curated public snapshot of the private Raid Scanner project, synchronized from the private working branch.
+          
+          ## Included
+          - All Flutter/Dart application files under lib/ and the current test suites.
+          - The local flutter_paddle_ocr_v5 plugin source, with accompanying license files and third-party notices.
+          - All tracked Python/Dart OCR experiments under experiments/, including their input fixtures, generated comparisons, diagnostic JSON/text and experiment logs.
+          - The tracked datasets under dataset_final/, dataset_icons/ and dataset_roboflow/.
+          - The complete tracked Android project files, including the Gradle wrapper and launcher icon.
+          - The reviewed root card-filter log after removal of the local device/project path.
+          - Sanitized development context/history, the model catalog and fixture notes.
+          - Read-only reference copies of the private GitHub Actions workflows under project_docs/workflows/; these are documentation files, not active workflows.
+          
+          ## Model/build limitations
+          - assets/inference.onnx is deliberately not mirrored until its exact origin and redistribution license are confirmed.
+          - The experiment detector and CRAFT ONNX files included here have corresponding third-party license notices under licenses/.
+          - The private source repository remains the source of truth. This mirror is for code review and technical analysis; it is not guaranteed to be a self-contained build package.
+          
+          ## Security and privacy
+          - No private Git history, API credentials, local secrets, personal notes, raw backups or generated APKs are included.
+          - New source files are not published automatically unless their paths are added to the allowlist in the private workflow.
+          - This repository is public. Do not put secrets, private user data or confidential material here.
+          README_EOF
+
+          cat > "$STAGE/MIRROR_SCOPE.md" <<'SCOPE_EOF'
+          # Mirror scope
+          
+          This repository is an explicit allowlist snapshot from the private Raid Scanner working branch.
+          
+          ## Included
+          - lib/: all tracked Flutter/Dart application source.
+          - test/ and root test_*.py / test_*.dart files.
+          - tool/: all allowlisted development and diagnostic utilities.
+          - local_plugins/flutter_paddle_ocr_v5/: tracked local plugin source; license copies and third-party notices are generated into this mirror.
+          - experiments/: all tracked experiment source, fixtures, images, ONNX detector candidates, generated comparisons, diagnostic outputs and the reviewed scan_video.log.
+          - dataset_final/, dataset_icons/ and dataset_roboflow/: tracked image datasets and Roboflow export metadata.
+          - android/: all tracked Android project files, including wrapper JAR and launcher icon.
+          - card_filter.log: published only after replacing the local Termux/project path.
+          - selected text assets, manifests and build configuration.
+          - project_docs/workflows/: read-only .yml.txt copies of the private build and mirror workflows (not installed as active GitHub Actions workflows).
+          - sanitized development documents and third-party license texts.
+          
+          ## Excluded
+          - assets/inference.onnx: model origin and redistribution license have not been independently identified.
+          - Raw private Git history. Historical commits can retain revoked credentials; publishing history would expose more than the current snapshot.
+          - CONTEXT.md, HISTORY.md, history.md, PROJECT_HISTORY.md, PROJECT_PASSPORT.txt and backups; these contain private conversation notes, personal addressing/preferences or unreviewed historical material. Sanitized development summaries are mirrored instead.
+          - The actual .github/workflows/ paths; read-only copies are published under project_docs/workflows/ to avoid granting workflow-write permission to the mirror token.
+          - Unreviewed screenshots outside the allowlisted experiment and dataset paths, generated APKs, local machine configuration, credentials, API keys and personal data.
+          
+          Only reviewed paths in the private workflow allowlist are copied. New files are not published automatically.
+          SCOPE_EOF
+
+          cat > "$STAGE/THIRD_PARTY_NOTICES.md" <<'NOTICES_EOF'
+          # Third-party notices
+          
+          This file records the upstream license information identified for source and model artifacts included in this public review mirror. It is not a legal opinion; verify the exact provenance of redistributed artifacts before commercial distribution.
+          
+          ## flutter_paddle_ocr_v5 plugin
+          The local plugin identifies its upstream repository as https://github.com/mencomao/flutter-paddle-ocr and declares Apache License 2.0. A copy of the upstream license is included at local_plugins/LICENSE.
+          
+          The plugin contains Clipper 6.4.2-derived polygon clipping code in:
+          - local_plugins/flutter_paddle_ocr_v5/android/src/main/cpp/ocr_clipper.cpp
+          - local_plugins/flutter_paddle_ocr_v5/android/src/main/cpp/ocr_clipper.hpp
+          
+          Those source headers identify Angus Johnson and the Boost Software License 1.0. The full license is included at licenses/Boost-1.0.txt.
+          
+          The plugin's native pipeline also acknowledges PaddleOCR / Paddle-Lite demo code. PaddleOCR's Apache License 2.0 text is included at licenses/PaddleOCR-LICENSE.txt.
+          
+          ## OCR experiment models
+          - experiments/card_localization/ppocrv6_small_det.onnx and det_inference.onnx have identical Git blob contents in the source revision. The project labels the former as a PP-OCRv6 small detector candidate. The PaddlePaddle PP-OCRv6 model card declares Apache-2.0; see https://huggingface.co/PaddlePaddle/PP-OCRv6_small_det_onnx and licenses/PaddleOCR-LICENSE.txt.
+          - experiments/card_localization/craft/craft_mlt_25k.onnx is identified by the project as a CRAFT detector model. The upstream CRAFT-pytorch repository publishes its code under the MIT license; a copy is included at licenses/CRAFT-MIT.txt. The original repository is https://github.com/clovaai/CRAFT-pytorch.
+          
+          ## External build dependencies
+          ONNX Runtime, OpenCV, Flutter and other dependencies are resolved by the build configuration rather than vendored as full source trees in this mirror. Their respective upstream license terms continue to apply.
+          
+          ## Local modifications
+          This plugin directory is a local project copy/fork. Review the upstream history and changed-file notices before redistributing the plugin separately. The presence of a license file does not mean every dependency or model in the wider project is covered by that same license.
+          NOTICES_EOF
+
+          cat > "$STAGE/licenses/Boost-1.0.txt" <<'BOOST_EOF'
+          Boost Software License - Version 1.0 - August 17th, 2003
+          
+          Permission is hereby granted, free of charge, to any person or organization
+          obtaining a copy of the software and accompanying documentation covered by
+          this license (the "Software") to use, reproduce, display, distribute,
+          execute, and transmit the Software, and to prepare derivative works of the
+          Software, and to permit third-parties to whom the Software is furnished to
+          do so, all subject to the following:
+          
+          The copyright notices in the Software and this entire statement, including
+          the above license grant, this restriction and the following disclaimer,
+          must be included in all copies of the Software, in whole or in part, and
+          all derivative works of the Software, unless such copies or derivative
+          works are solely in the form of machine-executable object code generated by
+          a source language processor.
+          
+          THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+          IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+          FITNESS FOR A PARTICULAR PURPOSE, TITLE AND NON-INFRINGEMENT. IN NO EVENT
+          SHALL THE COPYRIGHT HOLDERS OR ANYONE DISTRIBUTING THE SOFTWARE BE LIABLE
+          FOR ANY DAMAGES OR OTHER LIABILITY, WHETHER IN CONTRACT, TORT OR OTHERWISE,
+          ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+          DEALINGS IN THE SOFTWARE.
+          BOOST_EOF
+
+          cat > "$STAGE/licenses/CRAFT-MIT.txt" <<'CRAFT_EOF'
+          Copyright (c) 2019-present NAVER Corp.
+          
+          Permission is hereby granted, free of charge, to any person obtaining a copy
+          of this software and associated documentation files (the "Software"), to deal
+          in the Software without restriction, including without limitation the rights
+          to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+          copies of the Software, and to permit persons to whom the Software is
+          furnished to do so, subject to the following conditions:
+          
+          The above copyright notice and this permission notice shall be included in
+          all copies or substantial portions of the Software.
+          
+          THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+          IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+          FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+          AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+          LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+          OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+          THE SOFTWARE.
+          CRAFT_EOF
+
+          cat > "$STAGE/licenses/PaddleOCR-LICENSE.txt" <<'PADDLE_EOF'
+                                 Apache License
+                           Version 2.0, January 2004
+                        http://www.apache.org/licenses/
+          
+             TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+          
+             1. Definitions.
+          
+                "License" shall mean the terms and conditions for use, reproduction,
+                and distribution as defined by Sections 1 through 9 of this document.
+          
+                "Licensor" shall mean the copyright owner or entity authorized by
+                the copyright owner that is granting the License.
+          
+                "Legal Entity" shall mean the union of the acting entity and all
+                other entities that control, are controlled by, or are under common
+                control with that entity. For the purposes of this definition,
+                "control" means (i) the power, direct or indirect, to cause the
+                direction or management of such entity, whether by contract or
+                otherwise, or (ii) ownership of fifty percent (50%) or more of the
+                outstanding shares, or (iii) beneficial ownership of such entity.
+          
+                "You" (or "Your") shall mean an individual or Legal Entity
+                exercising permissions granted by this License.
+          
+                "Source" form shall mean the preferred form for making modifications,
+                including but not limited to software source code, documentation
+                source, and configuration files.
+          
+                "Object" form shall mean any form resulting from mechanical
+                transformation or translation of a Source form, including but
+                not limited to compiled object code, generated documentation,
+                and conversions to other media types.
+          
+                "Work" shall mean the work of authorship, whether in Source or
+                Object form, made available under the License, as indicated by a
+                copyright notice that is included in or attached to the work
+                (an example is provided in the Appendix below).
+          
+                "Derivative Works" shall mean any work, whether in Source or Object
+                form, that is based on (or derived from) the Work and for which the
+                editorial revisions, annotations, elaborations, or other modifications
+                represent, as a whole, an original work of authorship. For the purposes
+                of this License, Derivative Works shall not include works that remain
+                separable from, or merely link (or bind by name) to the interfaces of,
+                the Work and Derivative Works thereof.
+          
+                "Contribution" shall mean any work of authorship, including
+                the original version of the Work and any modifications or additions
+                to that Work or Derivative Works thereof, that is intentionally
+                submitted to Licensor for inclusion in the Work by the copyright owner
+                or by an individual or Legal Entity authorized to submit on behalf of
+                the copyright owner. For the purposes of this definition, "submitted"
+                means any form of electronic, verbal, or written communication sent
+                to the Licensor or its representatives, including but not limited to
+                communication on electronic mailing lists, source code control systems,
+                and issue tracking systems that are managed by, or on behalf of, the
+                Licensor for the purpose of discussing and improving the Work, but
+                excluding communication that is conspicuously marked or otherwise
+                designated in writing by the copyright owner as "Not a Contribution."
+          
+                "Contributor" shall mean Licensor and any individual or Legal Entity
+                on behalf of whom a Contribution has been received by Licensor and
+                subsequently incorporated within the Work.
+          
+             2. Grant of Copyright License. Subject to the terms and conditions of
+                this License, each Contributor hereby grants to You a perpetual,
+                worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+                copyright license to reproduce, prepare Derivative Works of,
+                publicly display, publicly perform, sublicense, and distribute the
+                Work and such Derivative Works in Source or Object form.
+          
+             3. Grant of Patent License. Subject to the terms and conditions of
+                this License, each Contributor hereby grants to You a perpetual,
+                worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+                (except as stated in this section) patent license to make, have made,
+                use, offer to sell, sell, import, and otherwise transfer the Work,
+                where such license applies only to those patent claims licensable
+                by such Contributor that are necessarily infringed by their
+                Contribution(s) alone or by combination of their Contribution(s)
+                with the Work to which such Contribution(s) was submitted. If You
+                institute patent litigation against any entity (including a
+                cross-claim or counterclaim in a lawsuit) alleging that the Work
+                or a Contribution incorporated within the Work constitutes direct
+                or contributory patent infringement, then any patent licenses
+                granted to You under this License for that Work shall terminate
+                as of the date such litigation is filed.
+          
+             4. Redistribution. You may reproduce and distribute copies of the
+                Work or Derivative Works thereof in any medium, with or without
+                modifications, and in Source or Object form, provided that You
+                meet the following conditions:
+          
+                (a) You must give any other recipients of the Work or
+          Derivative Works a copy of this License; and
+          
+                (b) You must cause any modified files to carry prominent notices
+          stating that You changed the files; and
+          
+                (c) You must retain, in the Source form of any Derivative Works
+          that You distribute, all copyright, patent, trademark, and
+          attribution notices from the Source form of the Work,
+          excluding those notices that do not pertain to any part of
+          the Derivative Works; and
+          
+                (d) If the Work includes a "NOTICE" text file as part of its
+          distribution, then any Derivative Works that You distribute must
+          include a readable copy of the attribution notices contained
+          within such NOTICE file, excluding those notices that do not
+          pertain to any part of the Derivative Works, in at least one
+          of the following places: within a NOTICE text file distributed
+          as part of the Derivative Works; within the Source form or
+          documentation, if provided along with the Derivative Works; or,
+          within a display generated by the Derivative Works, if and
+          wherever such third-party notices normally appear. The contents
+          of the NOTICE file are for informational purposes only and
+          do not modify the License. You may add Your own attribution
+          notices within Derivative Works that You distribute, alongside
+          or as an addendum to the NOTICE text from the Work, provided
+          that such additional attribution notices cannot be construed
+          as modifying the License.
+          
+                You may add Your own copyright statement to Your modifications and
+                may provide additional or different license terms and conditions
+                for use, reproduction, or distribution of Your modifications, or
+                for any such Derivative Works as a whole, provided Your use,
+                reproduction, and distribution of the Work otherwise complies with
+                the conditions stated in this License.
+          
+             5. Submission of Contributions. Unless You explicitly state otherwise,
+                any Contribution intentionally submitted for inclusion in the Work
+                by You to the Licensor shall be under the terms and conditions of
+                this License, without any additional terms or conditions.
+                Notwithstanding the above, nothing herein shall supersede or modify
+                the terms of any separate license agreement you may have executed
+                with Licensor regarding such Contributions.
+          
+             6. Trademarks. This License does not grant permission to use the trade
+                names, trademarks, service marks, or product names of the Licensor,
+                except as required for reasonable and customary use in describing the
+                origin of the Work and reproducing the content of the NOTICE file.
+          
+             7. Disclaimer of Warranty. Unless required by applicable law or
+                agreed to in writing, Licensor provides the Work (and each
+                Contributor provides its Contributions) on an "AS IS" BASIS,
+                WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+                implied, including, without limitation, any warranties or conditions
+                of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
+                PARTICULAR PURPOSE. You are solely responsible for determining the
+                appropriateness of using or redistributing the Work and assume any
+                risks associated with Your exercise of permissions under this License.
+          
+             8. Limitation of Liability. In no event and under no legal theory,
+                whether in tort (including negligence), contract, or otherwise,
+                unless required by applicable law (such as deliberate and grossly
+                negligent acts) or agreed to in writing, shall any Contributor be
+                liable to You for damages, including any direct, indirect, special,
+                incidental, or consequential damages of any character arising as a
+                result of this License or out of the use or inability to use the
+                Work (including but not limited to damages for loss of goodwill,
+                work stoppage, computer failure or malfunction, or any and all
+                other commercial damages or losses), even if such Contributor
+                has been advised of the possibility of such damages.
+          
+             9. Accepting Warranty or Additional Liability. While redistributing
+                the Work or Derivative Works thereof, You may choose to offer,
+                and charge a fee for, acceptance of support, warranty, indemnity,
+                or other liability obligations and/or rights consistent with this
+                License. However, in accepting such obligations, You may act only
+                on Your own behalf and on Your sole responsibility, not on behalf
+                of any other Contributor, and only if You agree to indemnify,
+                defend, and hold each Contributor harmless for any liability
+                incurred by, or claims asserted against, such Contributor by reason
+                of your accepting any such warranty or additional liability.
+          
+             END OF TERMS AND CONDITIONS
+          
+             APPENDIX: How to apply the Apache License to your work.
+          
+                To apply the Apache License to your work, attach the following
+                boilerplate notice, with the fields enclosed by brackets "[]"
+                replaced with your own identifying information. (Don't include
+                the brackets!)  The text should be enclosed in the appropriate
+                comment syntax for the file format. We also recommend that a
+                file or class name and description of purpose be included on the
+                same "printed page" as the copyright notice for easier
+                identification within third-party archives.
+          
+             Copyright (c) 2016 PaddlePaddle Authors. All Rights Reserved.
+          
+             Licensed under the Apache License, Version 2.0 (the "License");
+             you may not use this file except in compliance with the License.
+             You may obtain a copy of the License at
+          
+                 http://www.apache.org/licenses/LICENSE-2.0
+          
+             Unless required by applicable law or agreed to in writing, software
+             distributed under the License is distributed on an "AS IS" BASIS,
+             WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+             See the License for the specific language governing permissions and
+             limitations under the License.
+          PADDLE_EOF
+
+          cat > "$STAGE/local_plugins/LICENSE" <<'PLUGIN_EOF'
+                                 Apache License
+                           Version 2.0, January 2004
+                        http://www.apache.org/licenses/
+          
+             TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+          
+             1. Definitions.
+          
+                "License" shall mean the terms and conditions for use, reproduction,
+                and distribution as defined by Sections 1 through 9 of this document.
+          
+                "Licensor" shall mean the copyright owner or entity authorized by
+                the copyright owner that is granting the License.
+          
+                "Legal Entity" shall mean the union of the acting entity and all
+                other entities that control, are controlled by, or are under common
+                control with that entity. For the purposes of this definition,
+                "control" means (i) the power, direct or indirect, to cause the
+                direction or management of such entity, whether by contract or
+                otherwise, or (ii) ownership of fifty percent (50%) or more of the
+                outstanding shares, or (iii) beneficial ownership of such entity.
+          
+                "You" (or "Your") shall mean an individual or Legal Entity
+                exercising permissions granted by this License.
+          
+                "Source" form shall mean the preferred form for making modifications,
+                including but not limited to software source code, documentation
+                source, and configuration files.
+          
+                "Object" form shall mean any form resulting from mechanical
+                transformation or translation of a Source form, including but
+                not limited to compiled object code, generated documentation,
+                and conversions to other media types.
+          
+                "Work" shall mean the work of authorship, whether in Source or
+                Object form, made available under the License, as indicated by a
+                copyright notice that is included in or attached to the work
+                (an example is provided in the Appendix below).
+          
+                "Derivative Works" shall mean any work, whether in Source or Object
+                form, that is based on (or derived from) the Work and for which the
+                editorial revisions, annotations, elaborations, or other modifications
+                represent, as a whole, an original work of authorship. For the purposes
+                of this License, Derivative Works shall not include works that remain
+                separable from, or merely link (or bind by name) to the interfaces of,
+                the Work and Derivative Works thereof.
+          
+                "Contribution" shall mean any work of authorship, including
+                the original version of the Work and any modifications or additions
+                to that Work or Derivative Works thereof, that is intentionally
+                submitted to Licensor for inclusion in the Work by the copyright owner
+                or by an individual or Legal Entity authorized to submit on behalf of
+                the copyright owner. For the purposes of this definition, "submitted"
+                means any form of electronic, verbal, or written communication sent
+                to the Licensor or its representatives, including but not limited to
+                communication on electronic mailing lists, source code control systems,
+                and issue tracking systems that are managed by, or on behalf of, the
+                Licensor for the purpose of discussing and improving the Work, but
+                excluding communication that is conspicuously marked or otherwise
+                designated in writing by the copyright owner as "Not a Contribution."
+          
+                "Contributor" shall mean Licensor and any individual or Legal Entity
+                on behalf of whom a Contribution has been received by Licensor and
+                subsequently incorporated within the Work.
+          
+             2. Grant of Copyright License. Subject to the terms and conditions of
+                this License, each Contributor hereby grants to You a perpetual,
+                worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+                copyright license to reproduce, prepare Derivative Works of,
+                publicly display, publicly perform, sublicense, and distribute the
+                Work and such Derivative Works in Source or Object form.
+          
+             3. Grant of Patent License. Subject to the terms and conditions of
+                this License, each Contributor hereby grants to You a perpetual,
+                worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+                (except as stated in this section) patent license to make, have made,
+                use, offer to sell, sell, import, and otherwise transfer the Work,
+                where such license applies only to those patent claims licensable
+                by such Contributor that are necessarily infringed by their
+                Contribution(s) alone or by combination of their Contribution(s)
+                with the Work to which such Contribution(s) was submitted. If You
+                institute patent litigation against any entity (including a
+                cross-claim or counterclaim in a lawsuit) alleging that the Work
+                or a Contribution incorporated within the Work constitutes direct
+                or contributory patent infringement, then any patent licenses
+                granted to You under this License for that Work shall terminate
+                as of the date such litigation is filed.
+          
+             4. Redistribution. You may reproduce and distribute copies of the
+                Work or Derivative Works thereof in any medium, with or without
+                modifications, and in Source or Object form, provided that You
+                meet the following conditions:
+          
+                (a) You must give any other recipients of the Work or
+          Derivative Works a copy of this License; and
+          
+                (b) You must cause any modified files to carry prominent notices
+          stating that You changed the files; and
+          
+                (c) You must retain, in the Source form of any Derivative Works
+          that You distribute, all copyright, patent, trademark, and
+          attribution notices from the Source form of the Work,
+          excluding those notices that do not pertain to any part of
+          the Derivative Works; and
+          
+                (d) If the Work includes a "NOTICE" text file as part of its
+          distribution, then any Derivative Works that You distribute must
+          include a readable copy of the attribution notices contained
+          within such NOTICE file, excluding those notices that do not
+          pertain to any part of the Derivative Works, in at least one
+          of the following places: within a NOTICE text file distributed
+          as part of the Derivative Works; within the Source form or
+          documentation, if provided along with the Derivative Works; or,
+          within a display generated by the Derivative Works, if and
+          wherever such third-party notices normally appear. The contents
+          of the NOTICE file are for informational purposes only and
+          do not modify the License. You may add Your own attribution
+          notices within Derivative Works that You distribute, alongside
+          or as an addendum to the NOTICE text from the Work, provided
+          that such additional attribution notices cannot be construed
+          as modifying the License.
+          
+                You may add Your own copyright statement to Your modifications and
+                may provide additional or different license terms and conditions
+                for use, reproduction, or distribution of Your modifications, or
+                for any such Derivative Works as a whole, provided Your use,
+                reproduction, and distribution of the Work otherwise complies with
+                the conditions stated in this License.
+          
+             5. Submission of Contributions. Unless You explicitly state otherwise,
+                any Contribution intentionally submitted for inclusion in the Work
+                by You to the Licensor shall be under the terms and conditions of
+                this License, without any additional terms or conditions.
+                Notwithstanding the above, nothing herein shall supersede or modify
+                the terms of any separate license agreement you may have executed
+                with Licensor regarding such Contributions.
+          
+             6. Trademarks. This License does not grant permission to use the trade
+                names, trademarks, service marks, or product names of the Licensor,
+                except as required for reasonable and customary use in describing the
+                origin of the Work and reproducing the content of the NOTICE file.
+          
+             7. Disclaimer of Warranty. Unless required by applicable law or
+                agreed to in writing, Licensor provides the Work (and each
+                Contributor provides its Contributions) on an "AS IS" BASIS,
+                WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+                implied, including, without limitation, any warranties or conditions
+                of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
+                PARTICULAR PURPOSE. You are solely responsible for determining the
+                appropriateness of using or redistributing the Work and assume any
+                risks associated with Your exercise of permissions under this License.
+          
+             8. Limitation of Liability. In no event and under no legal theory,
+                whether in tort (including negligence), contract, or otherwise,
+                unless required by applicable law (such as deliberate and grossly
+                negligent acts) or agreed to in writing, shall any Contributor be
+                liable to You for damages, including any direct, indirect, special,
+                incidental, or consequential damages of any character arising as a
+                result of this License or out of the use or inability to use the
+                Work (including but not limited to damages for loss of goodwill,
+                work stoppage, computer failure or malfunction, or any and all
+                other commercial damages or losses), even if such Contributor
+                has been advised of the possibility of such damages.
+          
+             9. Accepting Warranty or Additional Liability. While redistributing
+                the Work or Derivative Works thereof, You may choose to offer,
+                and charge a fee for, acceptance of support, warranty, indemnity,
+                or other liability obligations and/or rights consistent with this
+                License. However, in accepting such obligations, You may act only
+                on Your own behalf and on Your sole responsibility, not on behalf
+                of any other Contributor, and only if You agree to indemnify,
+                defend, and hold each Contributor harmless for any liability
+                incurred by, or claims asserted against, such Contributor by reason
+                of your accepting any such warranty or additional liability.
+          
+             END OF TERMS AND CONDITIONS
+          
+             APPENDIX: How to apply the Apache License to your work.
+          
+                To apply the Apache License to your work, attach the following
+                boilerplate notice, with the fields enclosed by brackets "[]"
+                replaced with your own identifying information. (Don't include
+                the brackets!)  The text should be enclosed in the appropriate
+                comment syntax for the file format. We also recommend that a
+                file or class name and description of purpose be included on the
+                same "printed page" as the copyright notice for easier
+                identification within third-party archives.
+          
+             Copyright (c) 2016 PaddlePaddle Authors. All Rights Reserved.
+          
+             Licensed under the Apache License, Version 2.0 (the "License");
+             you may not use this file except in compliance with the License.
+             You may obtain a copy of the License at
+          
+                 http://www.apache.org/licenses/LICENSE-2.0
+          
+             Unless required by applicable law or agreed to in writing, software
+             distributed under the License is distributed on an "AS IS" BASIS,
+             WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+             See the License for the specific language governing permissions and
+             limitations under the License.
+          PLUGIN_EOF
+
+          mkdir -p "$STAGE/project_docs/workflows"
+          cp "$SRC/.github/workflows/publish-public-mirror.yml" "$STAGE/project_docs/workflows/publish-public-mirror.yml.txt"
+          cp "$SRC/.github/workflows/build.yml" "$STAGE/project_docs/workflows/build.yml.txt"
+
+          # Remove the local Termux/project path from the reviewed root log.
+          python3 - "$STAGE/card_filter.log" <<'PY'
+          import pathlib, re, sys
+          p = pathlib.Path(sys.argv[1])
+          if p.exists():
+              s = p.read_text(encoding="utf-8", errors="replace")
+              s = re.sub(r"/data/data/[^\s]+", "<LOCAL_ANDROID_PROJECT_PATH>", s)
+              s = re.sub(r"/home/[^/\s]+", "/home/<USER>", s)
+              p.write_text(s, encoding="utf-8")
+          PY
+
+          cat > "$STAGE/MODEL_CATALOG.md" <<'MODEL_EOF'
+          # Raid Scanner — ONNX model catalog
+          
+          | Private source path | Size | Public mirror status | Notes |
+          |---|---:|---|---|
+          | assets/inference.onnx | 62,762,162 bytes | Excluded | Recognition model used by lib/onnx_ocr.dart. Its exact upstream origin and redistribution license were not established during this review. |
+          | experiments/card_localization/det_inference.onnx | 9,880,512 bytes | Included | Same Git blob as ppocrv6_small_det.onnx at this source revision. |
+          | experiments/card_localization/ppocrv6_small_det.onnx | 9,880,512 bytes | Included | Project labels this as a PP-OCRv6 small detector candidate; PaddlePaddle model card declares Apache-2.0. |
+          | experiments/card_localization/craft/craft_mlt_25k.onnx | 83,060,718 bytes | Included | CRAFT text-detection experiment; corresponding MIT license copy is included under licenses/. |
+          
+          ## Source parity
+          - det_inference.onnx and ppocrv6_small_det.onnx have the same Git blob SHA in the private source branch, so they are duplicate binary contents at this revision.
+          - The actual ONNX graph metadata, inputs/outputs, opset and runtime compatibility still require inspection from the binary files.
+          - Do not infer the identity or license of assets/inference.onnx from the generic filename alone.
+          MODEL_EOF
+
+          cat > "$STAGE/REFERENCE_FIXTURES.md" <<'FIXTURES_EOF'
+          # Raid Scanner — reference fixtures and experiment data
+          
+          The public mirror now includes the tracked experiment fixtures and three project dataset folders:
+          - experiments/card_localization/: source crops, selected full-frame examples, detector comparisons, CRAFT/DBNet experiment images and generated overlays.
+          - experiments/polygon_test_frames/ and experiments/polygon_time_probe/: tracked source fixtures and diagnostic outputs.
+          - dataset_final/: curated 5-star and 6-star icon crops.
+          - dataset_icons/: icon crop collection used during training/validation work.
+          - dataset_roboflow/: ten-image Roboflow export, with train/validation/test subsets and export metadata.
+          - screenshots/: only the previously reviewed Speed reference images; other screenshot paths remain private.
+          
+          The images are game-interface captures/crops intended for OCR and image-processing analysis. The datasets are not guaranteed to be complete or independently re-annotated in this mirror. Use the file paths and script references to identify the exact sample corresponding to each experiment.
+          
+          The reviewed Speed fixture's visible expected fields are described in the original technical context; treat those notes as qualitative references rather than automated test assertions.
+          FIXTURES_EOF
+      - name: Scan snapshot for credential patterns
+        run: |
+          set -euo pipefail
+          python3 - "$RUNNER_TEMP/raid-app-deepseek-stage" <<'PY'
+          import pathlib
+          import re
+          import sys
+
+          root = pathlib.Path(sys.argv[1])
+          patterns = [
+              ("GitHub token", re.compile(r"\b(?:gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,})\b")),
+              ("AWS access key", re.compile(r"\bAKIA[0-9A-Z]{16}\b")),
+              ("Google API key", re.compile(r"\bAIza[0-9A-Za-z_-]{30,}\b")),
+              ("private key", re.compile(r"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----")),
+              ("hard-coded credential", re.compile(
+                  r"""(?i)\b(?:api[_-]?key|access[_-]?token|client[_-]?secret|password)\b\s*[:=]\s*["'](?!\s*(?:CHANGE_ME|YOUR_|<|\.\.\.))[\w./+=-]{24,}["']"""
+              )),
+          ]
+
+          findings = []
+          for path in root.rglob("*"):
+              if not path.is_file():
+                  continue
+              try:
+                  text = path.read_text(encoding="utf-8")
+              except (UnicodeDecodeError, OSError):
+                  continue
+              for line_no, line in enumerate(text.splitlines(), 1):
+                  for label, pattern in patterns:
+                      if pattern.search(line):
+                          findings.append((path.relative_to(root), line_no, label))
+
+          if findings:
+              for path, line_no, label in findings:
+                  print(f"::error file={path},line={line_no}::{label} detected; remove or externalize the value before publishing.")
+              sys.exit(1)
+
+          print("No common credential patterns found in the staged snapshot.")
+          PY
+
+      - name: Validate token against target repository
+        env:
+          MIRROR_TOKEN: ${{ secrets.DEEPSEEK_MIRROR_TOKEN }}
+        run: |
+          set -euo pipefail
+          RESPONSE_FILE="$RUNNER_TEMP/target-repo-response.json"
+          HTTP_STATUS="$(curl --silent --show-error --output "$RESPONSE_FILE" --write-out '%{http_code}' \
+            --header "Authorization: Bearer $MIRROR_TOKEN" \
+            --header "Accept: application/vnd.github+json" \
+            --header "X-GitHub-Api-Version: 2022-11-28" \
+            https://api.github.com/repos/artdota32-boop/raid_app_deepseek)"
+
+          case "$HTTP_STATUS" in
+            200) ;;
+            401)
+              echo "::error::GitHub rejected the mirror token. It may be invalid, expired, or revoked."
+              exit 1
+              ;;
+            403)
+              echo "::error::GitHub accepted the token identity but denied access. Check repository permissions or token policy."
+              exit 1
+              ;;
+            404)
+              echo "::error::The token cannot access raid_app_deepseek, or the repository name is incorrect."
+              exit 1
+              ;;
+            *)
+              echo "::error::GitHub API returned HTTP $HTTP_STATUS while validating the mirror token."
+              cat "$RESPONSE_FILE"
+              exit 1
+              ;;
+          esac
+
+          python3 - "$RESPONSE_FILE" <<'PY'
+          import json
+          import sys
+
+          with open(sys.argv[1], encoding="utf-8") as f:
+              data = json.load(f)
+
+          permissions = data.get("permissions") or {}
+          if not permissions.get("push", False):
+              print("::error::The token can read the repository but does not have push permission.")
+              sys.exit(1)
+
+          print("Mirror token is valid and has push access to raid_app_deepseek.")
+          PY
+
+      - name: Publish snapshot to public repository
+        env:
+          MIRROR_TOKEN: ${{ secrets.DEEPSEEK_MIRROR_TOKEN }}
+        run: |
+          set -euo pipefail
+          STAGE="$RUNNER_TEMP/raid-app-deepseek-stage"
+          TARGET="$RUNNER_TEMP/raid-app-deepseek-public"
+          PUBLIC_URL="https://github.com/artdota32-boop/raid_app_deepseek.git"
+          REMOTE_REFS_FILE="$RUNNER_TEMP/raid-app-remote-refs"
+          umask 077
+          trap 'rm -f "$REMOTE_REFS_FILE"' EXIT
+
+          # Use an ephemeral HTTP authorization header; do not write the token to disk.
+          AUTH_HEADER="AUTHORIZATION: basic $(printf '%s' "x-access-token:$MIRROR_TOKEN" | base64 -w0)"
+          unset MIRROR_TOKEN
+
+          git init -b main "$TARGET"
+          git -C "$TARGET" remote add origin "$PUBLIC_URL"
+
+          # Distinguish an empty mirror from an authentication or permission failure.
+          set +e
+          git -C "$TARGET" -c http.extraheader="$AUTH_HEADER" ls-remote --exit-code origin refs/heads/main > "$REMOTE_REFS_FILE"
+          LS_REMOTE_STATUS=$?
+          set -e
+
+          if [ "$LS_REMOTE_STATUS" -eq 0 ]; then
+            git -C "$TARGET" -c http.extraheader="$AUTH_HEADER" fetch --depth=1 origin main
+            git -C "$TARGET" reset --hard FETCH_HEAD
+          elif [ "$LS_REMOTE_STATUS" -eq 2 ]; then
+            echo "Public repository is empty; creating its main branch."
+          else
+            echo "::error::Authenticated Git access failed while checking the public repository."
+            exit "$LS_REMOTE_STATUS"
+          fi
+
+          # Replace only the public snapshot; never copy the private .git directory or commit history.
+          find "$TARGET" -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
+          cp -a "$STAGE"/. "$TARGET"/
+
+          git -C "$TARGET" config user.name "github-actions[bot]"
+          git -C "$TARGET" config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git -C "$TARGET" add -A
+
+          if git -C "$TARGET" diff --cached --quiet; then
+            echo "Public mirror is already up to date."
+            exit 0
+          fi
+
+          git -C "$TARGET" commit -m "Mirror curated source from private ${SOURCE_REF}"
+          git -C "$TARGET" -c http.extraheader="$AUTH_HEADER" push origin main

@@ -1,0 +1,219 @@
+{
+  "input_directory": "experiments/polygon_test_frames",
+  "output_directory": "experiments/polygon_test_frames/debug",
+  "total_files": 8,
+  "found": 8,
+  "not_found": 0,
+  "decode_failed": 0,
+  "errors": 0,
+  "results": [
+    {
+      "file": "speed_ru.png",
+      "status": "found",
+      "width": 1600,
+      "height": 720,
+      "confidence": 0.9641174671645635,
+      "bbox": {
+        "left": 76,
+        "top": 363,
+        "width": 372,
+        "height": 357,
+        "right": 448,
+        "bottom": 720
+      },
+      "top_line": {
+        "start_x": 78,
+        "end_x": 413
+      },
+      "left_vertical_coverage": 1.0,
+      "right_vertical_coverage": 0.9688385269121813,
+      "bottom_boundary_found": true,
+      "bottom_line_y": 718,
+      "bottom_touches_image_edge": true,
+      "used_bottom_fallback": false,
+      "debug_image": "experiments/polygon_test_frames/debug/speed_ru_debug.png"
+    },
+    {
+      "file": "МИФИЧЕСКАЯ.png",
+      "status": "found",
+      "width": 1600,
+      "height": 720,
+      "confidence": 0.9641174671645635,
+      "bbox": {
+        "left": 76,
+        "top": 363,
+        "width": 372,
+        "height": 357,
+        "right": 448,
+        "bottom": 720
+      },
+      "top_line": {
+        "start_x": 78,
+        "end_x": 413
+      },
+      "left_vertical_coverage": 1.0,
+      "right_vertical_coverage": 0.9688385269121813,
+      "bottom_boundary_found": true,
+      "bottom_line_y": 718,
+      "bottom_touches_image_edge": true,
+      "used_bottom_fallback": false,
+      "debug_image": "experiments/polygon_test_frames/debug/МИФИЧЕСКАЯ_debug.png"
+    },
+    {
+      "file": "ОРАНЖЕВЫЙ_2.png",
+      "status": "found",
+      "width": 1600,
+      "height": 720,
+      "confidence": 0.9641174671645635,
+      "bbox": {
+        "left": 76,
+        "top": 363,
+        "width": 372,
+        "height": 357,
+        "right": 448,
+        "bottom": 720
+      },
+      "top_line": {
+        "start_x": 78,
+        "end_x": 413
+      },
+      "left_vertical_coverage": 1.0,
+      "right_vertical_coverage": 0.9688385269121813,
+      "bottom_boundary_found": true,
+      "bottom_line_y": 718,
+      "bottom_touches_image_edge": true,
+      "used_bottom_fallback": false,
+      "debug_image": "experiments/polygon_test_frames/debug/ОРАНЖЕВЫЙ_2_debug.png"
+    },
+    {
+      "file": "РЕДКИЙ2.png",
+      "status": "found",
+      "width": 1600,
+      "height": 720,
+      "confidence": 0.9641174671645635,
+      "bbox": {
+        "left": 76,
+        "top": 363,
+        "width": 372,
+        "height": 357,
+        "right": 448,
+        "bottom": 720
+      },
+      "top_line": {
+        "start_x": 78,
+        "end_x": 413
+      },
+      "left_vertical_coverage": 1.0,
+      "right_vertical_coverage": 0.9688385269121813,
+      "bottom_boundary_found": true,
+      "bottom_line_y": 718,
+      "bottom_touches_image_edge": true,
+      "used_bottom_fallback": false,
+      "debug_image": "experiments/polygon_test_frames/debug/РЕДКИЙ2_debug.png"
+    },
+    {
+      "file": "РЕДКИЙ_.png",
+      "status": "found",
+      "width": 1600,
+      "height": 720,
+      "confidence": 0.9641174671645635,
+      "bbox": {
+        "left": 76,
+        "top": 363,
+        "width": 372,
+        "height": 357,
+        "right": 448,
+        "bottom": 720
+      },
+      "top_line": {
+        "start_x": 78,
+        "end_x": 413
+      },
+      "left_vertical_coverage": 1.0,
+      "right_vertical_coverage": 0.9688385269121813,
+      "bottom_boundary_found": true,
+      "bottom_line_y": 718,
+      "bottom_touches_image_edge": true,
+      "used_bottom_fallback": false,
+      "debug_image": "experiments/polygon_test_frames/debug/РЕДКИЙ__debug.png"
+    },
+    {
+      "file": "ЭПИЧЕСКИЙ_2.png",
+      "status": "found",
+      "width": 1600,
+      "height": 720,
+      "confidence": 0.9641174671645635,
+      "bbox": {
+        "left": 76,
+        "top": 363,
+        "width": 372,
+        "height": 357,
+        "right": 448,
+        "bottom": 720
+      },
+      "top_line": {
+        "start_x": 78,
+        "end_x": 413
+      },
+      "left_vertical_coverage": 1.0,
+      "right_vertical_coverage": 0.9688385269121813,
+      "bottom_boundary_found": true,
+      "bottom_line_y": 718,
+      "bottom_touches_image_edge": true,
+      "used_bottom_fallback": false,
+      "debug_image": "experiments/polygon_test_frames/debug/ЭПИЧЕСКИЙ_2_debug.png"
+    },
+    {
+      "file": "Эпический.png",
+      "status": "found",
+      "width": 1600,
+      "height": 720,
+      "confidence": 0.9641174671645635,
+      "bbox": {
+        "left": 76,
+        "top": 363,
+        "width": 372,
+        "height": 357,
+        "right": 448,
+        "bottom": 720
+      },
+      "top_line": {
+        "start_x": 78,
+        "end_x": 413
+      },
+      "left_vertical_coverage": 1.0,
+      "right_vertical_coverage": 0.9688385269121813,
+      "bottom_boundary_found": true,
+      "bottom_line_y": 718,
+      "bottom_touches_image_edge": true,
+      "used_bottom_fallback": false,
+      "debug_image": "experiments/polygon_test_frames/debug/Эпический_debug.png"
+    },
+    {
+      "file": "расторопность_рус.png",
+      "status": "found",
+      "width": 1600,
+      "height": 720,
+      "confidence": 0.9641174671645635,
+      "bbox": {
+        "left": 76,
+        "top": 363,
+        "width": 372,
+        "height": 357,
+        "right": 448,
+        "bottom": 720
+      },
+      "top_line": {
+        "start_x": 78,
+        "end_x": 413
+      },
+      "left_vertical_coverage": 1.0,
+      "right_vertical_coverage": 0.9688385269121813,
+      "bottom_boundary_found": true,
+      "bottom_line_y": 718,
+      "bottom_touches_image_edge": true,
+      "used_bottom_fallback": false,
+      "debug_image": "experiments/polygon_test_frames/debug/расторопность_рус_debug.png"
+    }
+  ]
+}

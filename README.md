@@ -1,30 +1,23 @@
-# Raid Scanner — expanded DeepSeek review mirror
+# Raid Scanner — expanded public source mirror
 
-This is an expanded, curated public source snapshot of the private Raid Scanner project.
+This is a curated public snapshot of the private Raid Scanner project, synchronized from the private working branch.
 
 ## Included
-- All current Flutter/Dart files under lib/
-- Dart and Python tests, tools, OCR trainers, and root-level maintenance scripts
-- Python source experiments under experiments/card_localization/
-- A limited set of reviewed game-frame and artifact-crop fixtures
-- Sanitized technical context, development history, model catalog and fixture notes
-- Android text configuration and app entry-point sources
-- Flutter dependency manifests and selected text assets
-- Codemagic and GitLab build configuration
+- All Flutter/Dart application files under lib/ and the current test suites.
+- The local flutter_paddle_ocr_v5 plugin source, with accompanying license files and third-party notices.
+- All tracked Python/Dart OCR experiments under experiments/, including their input fixtures, generated comparisons, diagnostic JSON/text and experiment logs.
+- The tracked datasets under dataset_final/, dataset_icons/ and dataset_roboflow/.
+- The complete tracked Android project files, including the Gradle wrapper and launcher icon.
+- The reviewed root card-filter log after removal of the local device/project path.
+- Sanitized development context/history, the model catalog and fixture notes.
+- Read-only reference copies of the private GitHub Actions workflows under project_docs/workflows/; these are documentation files, not active workflows.
 
-## How to interpret the code
-- The active Flutter application is under lib/.
-- Root-level trainer_*.dart and trainer_*.py files are standalone trainers or experiments; they are not all runtime entry points.
-- The experiments/ directory contains research and comparison scripts. Some require image fixtures or model files that are deliberately not mirrored.
-- The private repository remains the source of truth.
-
-## Build limitations
-- Large model binaries, including assets/inference.onnx, are intentionally excluded. A complete local build needs the model supplied separately.
-- The local_plugins/ vendor source is excluded pending a license review.
-- This is intended for source review and architecture analysis, not as a self-contained APK build package.
+## Model/build limitations
+- assets/inference.onnx is deliberately not mirrored until its exact origin and redistribution license are confirmed.
+- The experiment detector and CRAFT ONNX files included here have corresponding third-party license notices under licenses/.
+- The private source repository remains the source of truth. This mirror is for code review and technical analysis; it is not guaranteed to be a self-contained build package.
 
 ## Security and privacy
-- No private Git history, API credentials, local secrets, personal notes, general datasets, generated diagnostics, or logs are included.
-- Only the six exact reference-image paths listed in REFERENCE_FIXTURES.md are included; other screenshots and image data stay private.
-- The publishing workflow checks staged text files for common credential formats before publishing.
-- Do not treat this public mirror as a secure place to store credentials or private data.
+- No private Git history, API credentials, local secrets, personal notes, raw backups or generated APKs are included.
+- New source files are not published automatically unless their paths are added to the allowlist in the private workflow.
+- This repository is public. Do not put secrets, private user data or confidential material here.

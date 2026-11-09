@@ -1,28 +1,13 @@
-# Raid Scanner — reviewed OCR reference fixtures
+# Raid Scanner — reference fixtures and experiment data
 
-These are a small, curated set of game-interface images selected to make code review more concrete. They are not a general dataset and do not replace the private training/evaluation data.
+The public mirror now includes the tracked experiment fixtures and three project dataset folders:
+- experiments/card_localization/: source crops, selected full-frame examples, detector comparisons, CRAFT/DBNet experiment images and generated overlays.
+- experiments/polygon_test_frames/ and experiments/polygon_time_probe/: tracked source fixtures and diagnostic outputs.
+- dataset_final/: curated 5-star and 6-star icon crops.
+- dataset_icons/: icon crop collection used during training/validation work.
+- dataset_roboflow/: ten-image Roboflow export, with train/validation/test subsets and export metadata.
+- screenshots/: only the previously reviewed Speed reference images; other screenshot paths remain private.
 
-| Fixture | Purpose |
-|---|---|
-| `experiments/card_localization/speed_ru_frame_2s.jpg` | Full game frame showing the artifact card in context; useful for understanding detection and crop selection |
-| `screenshots/speed_ru_frame.png` | Full reference frame used in the crop/parity work |
-| `experiments/card_localization/card_crop.jpg` | Cropped artifact image consumed by `test_det_vs_morph.py` |
-| `experiments/card_localization/dbnet_samples_v1/card_001_t0p6s.jpg` | Small card crop used by DBNet/CRAFT/recognition comparison scripts |
-| `screenshots/outputs/speed_ru_card_crop.png` | Reference crop output for image-processing comparison |
-| `assets/diagnostics/line_08_white.png` | A small text-line crop used for OCR diagnostics |
+The images are game-interface captures/crops intended for OCR and image-processing analysis. The datasets are not guaranteed to be complete or independently re-annotated in this mirror. Use the file paths and script references to identify the exact sample corresponding to each experiment.
 
-## Expected text visible in the Speed artifact example
-
-The reviewed Speed boots crop visibly contains these fields (transcription for qualitative comparison):
-- Set: Speed
-- Item: Boots
-- Rarity: Legendary
-- Main stat: Speed 26
-- Substats shown: ATK 10%, Accuracy 9, Resistance 28, DEF 15
-- Set bonus shown: Speed +12%
-
-The exact rendered labels and OCR output may vary by preprocessing and OCR engine. Treat the list above as a human-readable visual reference, not a machine-checked assertion.
-
-## Image-use boundaries
-
-Only the six paths listed above are included as reference fixtures. Other screenshots, generated overlays, intermediate crops, datasets and tensors remain excluded. If a new fixture is needed, add only the exact reviewed file path to the private workflow allowlist.
+The reviewed Speed fixture's visible expected fields are described in the original technical context; treat those notes as qualitative references rather than automated test assertions.
