@@ -6,10 +6,12 @@ This repository is an explicit allowlist snapshot from the private Raid Scanner 
 - lib/: all current Flutter/Dart application source
 - test/ and root test_*.py / test_*.dart files
 - tool/: diagnostic and development utilities
-- experiments/card_localization/: Python source scripts only
+- experiments/card_localization/: Python source scripts and two reviewed OCR input crops / frame fixtures
 - Root-level Python/Dart trainer and maintenance scripts
 - android/: text build configuration, manifest, and app entry-point sources
-- pubspec.yaml, pubspec.lock, selected text assets, and Codemagic/GitLab build configuration
+- screenshots/: only the two reviewed Speed reference images listed below
+- assets/diagnostics/: one reviewed OCR line crop
+- Four sanitized review documents, selected text assets, and Codemagic/GitLab build configuration
 
 ## Excluded paths and data
 - GitHub Actions workflow files (kept out to avoid granting the mirror token workflow permission)
@@ -18,7 +20,7 @@ This repository is an explicit allowlist snapshot from the private Raid Scanner 
 - local_plugins/ source pending license review
 - ONNX/TFLite and other model binaries
 - dataset_* directories and other datasets
-- screenshots/, experiment image fixtures, generated diagnostics, logs, and tensors
+- all screenshots and experiment images except the exact six reviewed fixtures listed in REFERENCE_FIXTURES.md; generated diagnostics, logs, and tensors
 - local machine configuration, credentials, API keys, and personal data
 
 New files are not published automatically. Add a reviewed file path to the allowlist in
