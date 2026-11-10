@@ -18,7 +18,8 @@ This repository is an explicit allowlist snapshot from the private Raid Scanner 
 ## Excluded
 - assets/inference.onnx: model origin and redistribution license have not been independently identified.
 - Raw private Git history. Historical commits can retain revoked credentials; publishing history would expose more than the current snapshot.
-- CONTEXT.md, HISTORY.md, history.md, PROJECT_HISTORY.md, PROJECT_PASSPORT.txt and backups; these contain private conversation notes, personal addressing/preferences or unreviewed historical material. Sanitized development summaries are mirrored instead.
+- CONTEXT.md, HISTORY.md, history.md, PROJECT_PASSPORT.txt and backups; these may contain private conversation notes, personal addressing/preferences or unreviewed historical material.
+- PROJECT_HISTORY.md is the reviewed project wiki and is intentionally included as a curated context document; it is not the private Git commit history.
 - The actual .github/workflows/ paths; read-only copies are published under project_docs/workflows/ to avoid granting workflow-write permission to the mirror token.
 - Unreviewed screenshots outside the allowlisted experiment and dataset paths, generated APKs, local machine configuration, credentials, API keys and personal data.
 

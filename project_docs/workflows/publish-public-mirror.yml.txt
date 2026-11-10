@@ -61,6 +61,7 @@ jobs:
             "DEVELOPMENT_CONTEXT.md"
             "DEVELOPMENT_HISTORY.md"
             "MODEL_CATALOG.md"
+            "PROJECT_HISTORY.md"
             "REFERENCE_FIXTURES.md"
             "add_button.py"
             "add_disk_clean.py"
@@ -342,7 +343,7 @@ jobs:
           - The tracked datasets under dataset_final/, dataset_icons/ and dataset_roboflow/.
           - The complete tracked Android project files, including the Gradle wrapper and launcher icon.
           - The reviewed root card-filter log after removal of the local device/project path.
-          - Sanitized development context/history, the model catalog and fixture notes.
+          - Sanitized development context/history, the model catalog, fixture notes and the reviewed PROJECT_HISTORY.md project wiki.
           - Read-only reference copies of the private GitHub Actions workflows under project_docs/workflows/; these are documentation files, not active workflows.
           
           ## Model/build limitations
@@ -351,7 +352,8 @@ jobs:
           - The private source repository remains the source of truth. This mirror is for code review and technical analysis; it is not guaranteed to be a self-contained build package.
           
           ## Security and privacy
-          - No private Git history, API credentials, local secrets, personal notes, raw backups or generated APKs are included.
+          - No private Git history, API credentials, local secrets, private conversation notes, raw backups or generated APKs are included.
+          - The reviewed PROJECT_HISTORY.md project wiki is intentionally included; it is a curated context document, not the private Git commit history.
           - New source files are not published automatically unless their paths are added to the allowlist in the private workflow.
           - This repository is public. Do not put secrets, private user data or confidential material here.
           README_EOF
@@ -377,7 +379,8 @@ jobs:
           ## Excluded
           - assets/inference.onnx: model origin and redistribution license have not been independently identified.
           - Raw private Git history. Historical commits can retain revoked credentials; publishing history would expose more than the current snapshot.
-          - CONTEXT.md, HISTORY.md, history.md, PROJECT_HISTORY.md, PROJECT_PASSPORT.txt and backups; these contain private conversation notes, personal addressing/preferences or unreviewed historical material. Sanitized development summaries are mirrored instead.
+          - CONTEXT.md, HISTORY.md, history.md, PROJECT_PASSPORT.txt and backups; these may contain private conversation notes, personal addressing/preferences or unreviewed historical material.
+          - PROJECT_HISTORY.md is the reviewed project wiki and is intentionally included as a curated context document; it is not the private Git commit history.
           - The actual .github/workflows/ paths; read-only copies are published under project_docs/workflows/ to avoid granting workflow-write permission to the mirror token.
           - Unreviewed screenshots outside the allowlisted experiment and dataset paths, generated APKs, local machine configuration, credentials, API keys and personal data.
           
