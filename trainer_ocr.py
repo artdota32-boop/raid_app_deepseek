@@ -155,6 +155,7 @@ def recognize(image, save_tensor=False):
         if confidence_values else 0.0
     )
 
+print(f"DEBUG OCR: text={text!r} conf={confidence:.2f}")
     return text, confidence
 
 
