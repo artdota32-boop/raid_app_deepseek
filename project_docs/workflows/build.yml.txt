@@ -5,6 +5,13 @@ on:
     branches:
       - onnx_test
       - paddle-onnx-crop-compare-20261108
+    paths:
+      - 'lib/**'
+      - 'assets/**'
+      - 'android/**'
+      - 'local_plugins/**'
+      - 'pubspec.yaml'
+      - 'pubspec.lock'
   workflow_dispatch:
 
 permissions:
