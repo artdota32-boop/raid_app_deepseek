@@ -7,6 +7,11 @@ class OnnxOcr {
   static List<String>? _dictionary;
   static String lastDiagnostics = '';
 
+  // A/B TEST:
+  // false = старый белый padding (режим A).
+  // true  = нулевой padding после нормализации (режим B).
+  static bool useZeroPadding = false;
+
   static Future<void> _loadDict() async {
     if (_dictionary != null) return;
     final dictStr = await rootBundle.loadString('assets/dict.txt');
@@ -24,8 +29,8 @@ class OnnxOcr {
     lastDiagnostics = '';
     try {
       await _loadDict();
-      final session = await OnnxRuntime()
-          .createSessionFromAsset('assets/inference.onnx');
+      final session =
+          await OnnxRuntime().createSessionFromAsset('assets/inference.onnx');
       try {
         return await _recognizeWithSession(session, imageBytes);
       } finally {
@@ -46,8 +51,8 @@ class OnnxOcr {
     if (images.isEmpty) return <String>[];
 
     await _loadDict();
-    final session = await OnnxRuntime()
-        .createSessionFromAsset('assets/inference.onnx');
+    final session =
+        await OnnxRuntime().createSessionFromAsset('assets/inference.onnx');
 
     try {
       final results = <String>[];
@@ -87,6 +92,7 @@ class OnnxOcr {
     int targetW = (48 * ratio).round();
     if (targetW > 320) targetW = 320;
     if (targetW < 1) targetW = 1;
+    debugPrint('[ONNX WIDTH] input=${decoded.width}x${decoded.height} targetW=$targetW padding=${320 - targetW}');
     final resized = img.Image(width: targetW, height: 48);
 
     for (int y = 0; y < 48; y++) {
@@ -114,6 +120,11 @@ class OnnxOcr {
     for (int c = 0; c < 3; c++) {
       for (int y = 0; y < 48; y++) {
         for (int x = 0; x < 320; x++) {
+          // Режим B: нулевой padding ПОСЛЕ нормализации.
+          if (useZeroPadding && x >= targetW) {
+            tensorData[idx++] = 0.0;
+            continue;
+          }
           final p = padded.getPixel(x, y);
           double val = 0.0;
           if (c == 0) val = p.b.toDouble();
@@ -123,6 +134,10 @@ class OnnxOcr {
         }
       }
     }
+
+    debugPrint(
+      'ONNX PREPROCESS PADDING: ' + (useZeroPadding ? 'ZERO' : 'WHITE'),
+    );
 
     OrtValue? inputOrt;
     Map<String, OrtValue>? outputs;
@@ -148,7 +163,9 @@ class OnnxOcr {
           ' | TYPE: ' +
           output.dataType.toString() +
           ' | ELEMENTS: ' +
-          floatData.length.toString();
+          floatData.length.toString() +
+          ' | PADDING: ' +
+          (useZeroPadding ? 'ZERO' : 'WHITE');
 
       // 5. Упрощённый CTC greedy decoder.
       const int vocabSize = 852;
