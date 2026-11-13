@@ -48,12 +48,24 @@ jobs:
           path: private-source
           persist-credentials: false
 
+      - name: Checkout canonical project history
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: canonical-main
+          sparse-checkout: PROJECT_HISTORY.md
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
       - name: Build allowlisted public snapshot
         run: |
           set -euo pipefail
           SRC="$GITHUB_WORKSPACE/private-source"
           STAGE="$RUNNER_TEMP/raid-app-deepseek-stage"
           mkdir -p "$STAGE"
+
+          # PROJECT_HISTORY.md is canonical in main; the source branch may be an older working snapshot.
+          cp "$GITHUB_WORKSPACE/canonical-main/PROJECT_HISTORY.md" "$SRC/PROJECT_HISTORY.md"
 
           files=(
             ".gitignore"
